@@ -1,0 +1,163 @@
+import time
+
+
+HANGMANPICS = ['''
+  +---+
+  |   |
+      |
+      |
+      |
+      |
+=========''', '''
+  +---+
+  |   |
+  O   |
+      |
+      |
+      |
+=========''', '''
+  +---+
+  |   |
+  O   |
+  |   |
+      |
+      |
+=========''', '''
+  +---+
+  |   |
+  O   |
+ /|   |
+      |
+      |
+=========''', '''
+  +---+
+  |   |
+  O   |
+ /|\  |
+      |
+      |
+=========''', '''
+  +---+
+  |   |
+  O   |
+ /|\  |
+ /    |
+      |
+=========''', '''
+  +---+
+  |   |
+  O   |
+ /|\  |
+ / \  |
+      |
+=========''']
+
+INV_HANGMANPICS = HANGMANPICS[::-1]
+import random as rd
+import os
+
+# Función para traer la lista de palabras del archivo data.txt
+
+def read_data(filepath = "my_data\data.txt"):
+  word_list = []
+  with open(filepath, "r", encoding = "utf = 8") as data:
+    for line in data:
+      # Eliminar los espacios y convertir todo en mayusculas
+      word_list.append(str(line).strip())
+    return word_list
+
+def normalize(word: str) -> str:
+    table = word.maketrans('áéíóú', 'aeiou')
+    normalized_word = word.translate(table)
+    return normalized_word
+  
+def main():
+  data = read_data() # Cargar la Base de Datos
+  data = [normalize(word).upper() for word in data] # Vovler Mayusc y quitar Tildes
+  word = rd.choice(data) # Escoger una palabra de la BD
+  letters = [letter for letter in word] # lista de letras de la palabra
+  underscore_list = ["_"] * len(word) # lista de _ equivalente al # de letras
+  letters_index = {} # Diccionario para almacenar keys(letras), values(indices)
+  # Código para llenar el diccionario anterior
+  for index, letter in enumerate(word):
+    if not letters_index.get(letter): # si no encuentras la letra en el diccionario
+      letters_index[letter] = [] # Crea una llave nueva con la letra
+    letters_index[letter].append(index) # si encuentra la letra agregale el indice
+  
+  # Código para empezar y terminar el juego
+  lifes = 7
+  time_duration = 5
+
+  print("""
+
+  MMMMWNNNNNNNNNNNNNWMMWMWMNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNWMMMMMMWNNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+  MXo;:;;,'';;;;:kWk.'0MMMMMMMMMMMMMMMMMMMMMMMMMMMMNo'xWMMMMMKc,OMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+  MWX0000l 'x000KNMk.'0MWWWWMMMMMMMMWNWMMMMMMMMMMMMN: lWMMMMM0'.dMMMMMWWNWMMMMMMMMMMMMWNWMMMMMMMMWWWWMMMMMMMMMMMMWWWMMMMWNWMMMMMMMMWNNWMMMMMMMMMMMWWWMMM
+  MMMMMMMd ,KMMMMMMk.'xd:;;:OWMMMNkc;;;cOWMMMMMMMMMN: lWMMMMM0'.xMMW0l::;;:OWMMMWk:dOl:;;lKMMMMXd:;;:oo:kWMMOcdOo:;;oK0o:;;l0MMMNxc::;;oXMMMXdlOkc:;;xNM
+  MMMMMMMd ,KMMMMMMk. ,lk0o..OMMXc.cO0x,.xWMMMMMMMMN: ,ddddddc..xMMWOdk00l..OMMMWl .;oOOc ;XMWO,.ck0ko. cNMMd .;dOO: .:oOO: :XMMXxxO0k, lNMMK, 'cx0x' dW
+  MMMMMMMd ,KMMMMMMk..kWMMK,.xMMd .oxxx: ;XMMMMMMMMN: .cccccc;..xMMMMWNK0x..xMMMWl ,KMMMk.'0MN: cNMMMWl cNMMd ,0MMMx.'OMMMx.,KMMMMWXK0c ;XMMK, oWMMWc cW
+  MMMMMMMd ,KMMMMMMk.'0MMMK,.xMWl .;:::::dXMMMMMMMMX: lWMMMMM0'.xMMNk::cc:..xMMMWl :NMMMk.'0MK, oMMMMWl :NMMd ;XMMMx.,KMMMx.,KMWKo::ll' ;XMMK,.xMMMWc cW
+  MMMMMMMd ,KMMMMMMk.'0MMMK,.xMMx.'0MMMMMMMMMMMMMMMN: lWMMMMM0'.xMWd.'ONWK,.xMMMWl :NMMMk.'0MNc :XMMW0, cNMMd ;XMMMx.,KMMMx.,KMK;.lXWMd ;XMMK,.xMMMWc cW
+  MMMMMMMd ,KMMMMMMk.'0MMMK,.xMMNo.'okOOxONMMMMMMMMN: lWMMMMM0'.xMWd..dOxl. lKXWWl :NMMMk.'0MMK:.,clcc' cWMMd ;XMMMd.,KMMMx.,KMK;.:kkd; 'OWMK,.xMMMWc cW
+  MMMMMMM0ldNMMMMMMKldXMMMNdl0MMMW0o:;;:ckNMMMMMMMMWxcOWMMMMMXdl0MMNx:;:lkkc;cxNWOckWMMMKodXMMMN0xodOKc oWMM0cxNMMM0lxNMMMKldNMW0l;;cdOd;lKMNdl0MMMWkckW
+  MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWMMMWWWWMMMMMMMMMMMMMMMWK0KXX0l.'0MMMMMMMMMMMMMMMMMMMMMMMMMWWMMMMWWMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNd;:::;;l0WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNXXXXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+  
+  By Carlos Zumaran Deglado
+  """)
+  time.sleep(time_duration)
+
+  while True:
+    os.system("cls") # Limpia la pantalla o datos ingresados para seguir jugando
+    if lifes <= 6:
+      print( f"""
+      Esta en camino a la Horca
+
+
+      {INV_HANGMANPICS[lifes]}
+
+
+
+      """)
+    print(f"!Adivina la palabra¡ Tienes {lifes} intentos") # Mensaje de instrucción   
+    
+    for unsderscore in underscore_list: # Para cada _ en la lista de _
+      print(unsderscore + " ", end=" ") # imprime un _ + espacio y un espacio al final 
+    print("\n") # Has un salto de linea
+  
+    user_letter = input("Prueba una letra: ").upper() # Le pide al usuario un intento
+    assert user_letter.isalpha(), "Solo puedes ingresar letras." # mensaje de error cuando introduce numero
+    # assert len(user_letter) > 1, "Solo puedes ingresar una letra por intento." # mensaje de error introduce dos o mas letras
+    # assert user_letter == "", "No ingresaste ninguna respuesta." # mensaje de error cuando no introduce ningun valor
+
+    if user_letter in letters: # Si la letra ingresada se encuentra en lista de letras(keys)
+      for index in letters_index[user_letter]: # Para cada una de los indices(values) de las letras(keys)
+        underscore_list[index] = user_letter # reemplaza en las lista de _ por la letra del usuario
+    else:
+      lifes -= 1
+
+    # Condición para Ganar el Juego
+    if "_" not in underscore_list: # si ya no hay más _ en underscore_list
+      os.system("cls") # limpia la pantalla
+      print(f"!Ganaste¡ La palabra era: {word} ") # imprime le mensaje de ganaste
+      break # Termina el programa
+  
+    # Condición para Perder el Juego
+    if lifes == 0:
+      os.system("cls")
+      print( f"""
+      TE COLGARON ...... ¡¡¡¡
+
+
+      {INV_HANGMANPICS[lifes]}
+
+
+
+      """)
+      print(f"Perdiste.... La palabra era: {word}")
+      break
+  
+
+if __name__ == "__main__":
+    main()
